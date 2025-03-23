@@ -33,6 +33,31 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <!-- 添加IndexedDB支持 -->
+  <script>
+    // 创建flutter_bootstrap.js文件（如果不存在）
+    if (!window.flutter_bootstrap) {
+      const bootstrapScript = document.createElement('script');
+      bootstrapScript.text = `
+        // Flutter Web Bootstrap Script
+        window.flutterWebRenderer = "html";
+        window.addEventListener('load', function(ev) {
+          // 下载主要的Flutter应用脚本
+          _flutter.loader.loadEntrypoint({
+            serviceWorker: {
+              serviceWorkerVersion: null,
+            },
+            onEntrypointLoaded: function(engineInitializer) {
+              engineInitializer.initializeEngine().then(function(appRunner) {
+                appRunner.runApp();
+              });
+            }
+          });
+        });
+      `;
+      document.head.appendChild(bootstrapScript);
+    }
+  </script>
+  <script src="main.dart.js" defer></script>
 </body>
 </html>

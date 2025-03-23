@@ -2,11 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models/song_model.dart';
 import '../services/audio_player_service.dart';
-import '../services/storage_service_factory.dart';
+import '../services/storage_service.dart';
 
 class AudioProvider extends ChangeNotifier {
   final AudioPlayerService _playerService = AudioPlayerService();
-  final dynamic _storageService = StorageServiceFactory.getStorageService();
+  final StorageService _storageService = StorageService();
   bool _isLoading = false;
   String _error = '';
 

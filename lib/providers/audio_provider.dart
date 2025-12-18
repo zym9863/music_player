@@ -9,19 +9,23 @@ class AudioProvider extends ChangeNotifier {
   final StorageService _storageService = StorageService();
   bool _isLoading = false;
   String _error = '';
-  bool _showOnlyFavorites = false; // Added for favorite filtering
+  bool _showOnlyFavorites = false;
 
   // Getters
   AudioPlayerService get playerService => _playerService;
   List<Song> get playlist => _playerService.playlist;
-  List<Song> get filteredPlaylist => _showOnlyFavorites 
+  List<Song> get filteredPlaylist => _showOnlyFavorites
       ? _playerService.playlist.where((song) => song.isFavorite).toList()
       : _playerService.playlist;
   Song? get currentSong => _playerService.currentSong;
   bool get isPlaying => _playerService.audioPlayer.playing;
   bool get isLoading => _isLoading;
-  bool get showOnlyFavorites => _showOnlyFavorites; // Added getter
+  bool get showOnlyFavorites => _showOnlyFavorites;
   String get error => _error;
+
+  // Play mode getters
+  LoopMode get loopMode => _playerService.loopMode;
+  bool get isShuffle => _playerService.isShuffle;
 
   // Constructor
   AudioProvider() {
@@ -33,7 +37,6 @@ class AudioProvider extends ChangeNotifier {
   Future<void> _initAudioPlayer() async {
     try {
       await _playerService.init();
-      // Set up listeners for player state changes
       _playerService.audioPlayer.playerStateStream.listen((_) {
         notifyListeners();
       });
@@ -46,13 +49,13 @@ class AudioProvider extends ChangeNotifier {
       print(_error);
     }
   }
-  
+
   // Load saved playlist from storage
   Future<void> _loadSavedPlaylist() async {
     try {
       _isLoading = true;
       notifyListeners();
-      
+
       final savedPlaylist = await _storageService.loadPlaylist();
       if (savedPlaylist.isNotEmpty) {
         _playerService.setPlaylist(savedPlaylist);
@@ -77,13 +80,12 @@ class AudioProvider extends ChangeNotifier {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.audio,
         allowMultiple: true,
-        withData: kIsWeb, // Get file bytes for web platform
+        withData: kIsWeb,
       );
 
       if (result != null && result.files.isNotEmpty) {
         for (var file in result.files) {
           if (kIsWeb) {
-            // Web platform: use bytes instead of path
             if (file.bytes != null) {
               final song = Song.fromWebFile(
                 file.bytes!,
@@ -92,7 +94,6 @@ class AudioProvider extends ChangeNotifier {
               _playerService.addSong(song);
             }
           } else {
-            // Non-web platforms: use file path
             if (file.path != null) {
               final song = Song.fromFilePath(
                 file.path!,
@@ -102,7 +103,6 @@ class AudioProvider extends ChangeNotifier {
             }
           }
         }
-        // Save updated playlist
         await _savePlaylist();
         notifyListeners();
       }
@@ -193,7 +193,7 @@ class AudioProvider extends ChangeNotifier {
     await _storageService.clearSavedPlaylist();
     notifyListeners();
   }
-  
+
   // Save playlist to storage
   Future<void> _savePlaylist() async {
     try {
@@ -207,14 +207,10 @@ class AudioProvider extends ChangeNotifier {
   // Toggle favorite status for a song
   Future<void> toggleFavorite(String songId) async {
     try {
-      // Find the song in the playlist
       final songIndex = _playerService.playlist.indexWhere((song) => song.id == songId);
       if (songIndex != -1) {
-        // Toggle the favorite status
         _playerService.playlist[songIndex].isFavorite = !_playerService.playlist[songIndex].isFavorite;
-        // Save the updated playlist
         await _savePlaylist();
-        // Notify listeners
         notifyListeners();
       }
     } catch (e) {
@@ -227,6 +223,29 @@ class AudioProvider extends ChangeNotifier {
   void toggleShowOnlyFavorites() {
     _showOnlyFavorites = !_showOnlyFavorites;
     notifyListeners();
+  }
+
+  // Play mode methods
+  void setLoopMode(LoopMode mode) {
+    _playerService.setLoopMode(mode);
+    notifyListeners();
+  }
+
+  LoopMode toggleLoopMode() {
+    final newMode = _playerService.toggleLoopMode();
+    notifyListeners();
+    return newMode;
+  }
+
+  void setShuffle(bool enabled) {
+    _playerService.setShuffle(enabled);
+    notifyListeners();
+  }
+
+  bool toggleShuffle() {
+    final newState = _playerService.toggleShuffle();
+    notifyListeners();
+    return newState;
   }
 
   @override

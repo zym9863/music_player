@@ -9,13 +9,18 @@ class AudioProvider extends ChangeNotifier {
   final StorageService _storageService = StorageService();
   bool _isLoading = false;
   String _error = '';
+  bool _showOnlyFavorites = false; // Added for favorite filtering
 
   // Getters
   AudioPlayerService get playerService => _playerService;
   List<Song> get playlist => _playerService.playlist;
+  List<Song> get filteredPlaylist => _showOnlyFavorites 
+      ? _playerService.playlist.where((song) => song.isFavorite).toList()
+      : _playerService.playlist;
   Song? get currentSong => _playerService.currentSong;
   bool get isPlaying => _playerService.audioPlayer.playing;
   bool get isLoading => _isLoading;
+  bool get showOnlyFavorites => _showOnlyFavorites; // Added getter
   String get error => _error;
 
   // Constructor
@@ -197,6 +202,31 @@ class AudioProvider extends ChangeNotifier {
       _error = 'Error saving playlist: $e';
       print(_error);
     }
+  }
+
+  // Toggle favorite status for a song
+  Future<void> toggleFavorite(String songId) async {
+    try {
+      // Find the song in the playlist
+      final songIndex = _playerService.playlist.indexWhere((song) => song.id == songId);
+      if (songIndex != -1) {
+        // Toggle the favorite status
+        _playerService.playlist[songIndex].isFavorite = !_playerService.playlist[songIndex].isFavorite;
+        // Save the updated playlist
+        await _savePlaylist();
+        // Notify listeners
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Error toggling favorite: $e';
+      print(_error);
+    }
+  }
+
+  // Toggle show only favorites filter
+  void toggleShowOnlyFavorites() {
+    _showOnlyFavorites = !_showOnlyFavorites;
+    notifyListeners();
   }
 
   @override

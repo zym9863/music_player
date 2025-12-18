@@ -9,7 +9,7 @@ class Playlist extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final audioProvider = Provider.of<AudioProvider>(context);
-    final playlist = audioProvider.playlist;
+    final playlist = audioProvider.filteredPlaylist; // 使用筛选后的播放列表
     final currentSong = audioProvider.currentSong;
 
     if (playlist.isEmpty) {
@@ -24,7 +24,9 @@ class Playlist extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              '播放列表为空，请添加音乐',
+              audioProvider.showOnlyFavorites 
+                  ? '暂无收藏歌曲，请先收藏' 
+                  : '播放列表为空，请添加音乐',
               style: TextStyle(
                 fontSize: 16,
                 color: AppTheme.secondaryTextColor,
@@ -90,16 +92,39 @@ class Playlist extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            trailing: IconButton(
-              icon: Icon(
-                Icons.delete_outline_rounded,
-                color: isCurrentSong ? AppTheme.accentColor : AppTheme.lightGrey,
-                size: 22,
-              ),
-              splashRadius: 24,
-              onPressed: () => audioProvider.removeSong(song.id),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 收藏图标
+                IconButton(
+                  icon: Icon(
+                    song.isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: song.isFavorite ? AppTheme.accentColor : AppTheme.lightGrey,
+                    size: 20,
+                  ),
+                  splashRadius: 20,
+                  onPressed: () => audioProvider.toggleFavorite(song.id),
+                  tooltip: song.isFavorite ? '取消收藏' : '收藏',
+                ),
+                // 删除按钮
+                IconButton(
+                  icon: Icon(
+                    Icons.delete_outline_rounded,
+                    color: isCurrentSong ? AppTheme.accentColor : AppTheme.lightGrey,
+                    size: 22,
+                  ),
+                  splashRadius: 24,
+                  onPressed: () => audioProvider.removeSong(song.id),
+                ),
+              ],
             ),
-            onTap: () => audioProvider.playSongAt(index),
+            onTap: () {
+              // 查找原始播放列表中的索引
+              final originalIndex = audioProvider.playlist.indexWhere((s) => s.id == song.id);
+              if (originalIndex != -1) {
+                audioProvider.playSongAt(originalIndex);
+              }
+            },
           ),
         );
       },

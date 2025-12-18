@@ -8,6 +8,7 @@ class Song {
   final Duration duration;
   final String? albumArt;
   final Uint8List? bytes; // Added for web platform
+  bool isFavorite; // Added for favorite functionality
 
   Song({
     required this.id,
@@ -17,6 +18,7 @@ class Song {
     required this.duration,
     this.albumArt,
     this.bytes,
+    this.isFavorite = false,
   });
 
   // Create a song from a file path with default metadata (for non-web platforms)
@@ -32,6 +34,7 @@ class Song {
       duration: duration ?? const Duration(seconds: 0),
       albumArt: null,
       bytes: null,
+      isFavorite: false,
     );
   }
   
@@ -44,10 +47,11 @@ class Song {
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: title,
       artist: 'Unknown Artist',
-      filePath: 'web:${fileName}', // Use a special prefix for web files
+      filePath: 'web:', // Use a special prefix for web files
       duration: duration ?? const Duration(seconds: 0),
       albumArt: null,
       bytes: bytes,
+      isFavorite: false,
     );
   }
   
@@ -60,6 +64,7 @@ class Song {
       'filePath': filePath,
       'duration': duration.inMilliseconds,
       'albumArt': albumArt,
+      'isFavorite': isFavorite,
       // Note: bytes are not serialized as they can be large
       // and will be loaded from the file system when needed
     };
@@ -75,6 +80,7 @@ class Song {
       duration: Duration(milliseconds: json['duration']),
       albumArt: json['albumArt'],
       bytes: null, // Bytes are not stored in JSON
+      isFavorite: json.containsKey('isFavorite') ? json['isFavorite'] : false,
     );
   }
 }

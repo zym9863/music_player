@@ -17,6 +17,41 @@ class AudioProvider extends ChangeNotifier {
   bool get isPlaying => _playerService.audioPlayer.playing;
   bool get isLoading => _isLoading;
   String get error => _error;
+  LoopMode get loopMode => _playerService.loopMode;
+  bool get isShuffle => _playerService.isShuffle;
+
+  // Setters for playback modes
+  void setLoopMode(LoopMode mode) {
+    _playerService.setLoopMode(mode);
+    notifyListeners();
+  }
+
+  void setShuffle(bool shuffle) {
+    _playerService.setShuffle(shuffle);
+    notifyListeners();
+  }
+
+  // Toggle methods for UI convenience
+  void toggleLoopMode() {
+    final currentMode = _playerService.loopMode;
+    LoopMode nextMode;
+    switch (currentMode) {
+      case LoopMode.off:
+        nextMode = LoopMode.all;
+        break;
+      case LoopMode.all:
+        nextMode = LoopMode.one;
+        break;
+      case LoopMode.one:
+        nextMode = LoopMode.off;
+        break;
+    }
+    setLoopMode(nextMode);
+  }
+
+  void toggleShuffle() {
+    setShuffle(!_playerService.isShuffle);
+  }
 
   // Constructor
   AudioProvider() {
